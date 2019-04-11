@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -e
+
+SCRIPTS_DIR="/usr/local/bin"
+if [[ "$DRONE" == "true" || "$DRONE" == "TRUE" ]]; then
+    # Only for Drone CI
+    export DRONE_DIR="/drone"
+else
+    # Don't set up the environment, run sbt and exit
+    export DRONE_DIR="/platform"
+    mkdir -p "$DRONE_DIR"
+    source "$SCRIPTS_DIR/setup_cache.sh"
+    test -d "$DRONE_DIR" \
+        && /usr/lib/sbt \
+           -sbt-launch-dir /drone/.sbt/launchers "$@" \
+           -Dsbt.boot.properties=/sbt.boot \
+        || exit 1
+    exit 0
+fi
+
+set -eu
+
+/usr/lib/sbt \
+    -sbt-launch-dir /drone/.sbt/launchers "$@" \
+    -Dsbt.boot.properties=/sbt.boot
